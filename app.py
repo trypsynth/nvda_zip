@@ -24,4 +24,4 @@ def on_not_found(error):
 	return "Welcome!\n\nUse /xp to download a Windows XP (2017) release, or no parameter to download a current release."
 
 if __name__ == "__main__":
-	app.run()
+	app.run(host = "0.0.0.0")
