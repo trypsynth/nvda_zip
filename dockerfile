@@ -1,4 +1,4 @@
-FROM python:3.9.10-alpine3.14
+FROM python:3.10-alpine3.14
 WORKDIR /srv
 COPY . /srv
 RUN pip install --upgrade pip
