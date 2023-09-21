@@ -14,11 +14,11 @@ def index():
 	tree = html.fromstring(r.text)
 	current_version = tree.xpath("//div[@class='download-version__details section-title-v2']//h2")[0].text.replace("NVDA version ", "").strip()
 	url = f"https://www.nvaccess.org/download/nvda/releases/{current_version}/nvda_{current_version}.exe"
-	return redirect(url, code=302)
+	return redirect(url, code=301)
 
 @app.route("/xp")
 def xp():
-	return redirect("https://www.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe", code=302)
+	return redirect("https://www.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe", code=301)
 
 @app.route("/alpha")
 def alpha():
@@ -27,7 +27,7 @@ def alpha():
 	if not match:
 		return "There was an error getting the URL for the latest alpha"
 	url = match.group(1)
-	return redirect(url)
+	return redirect(url, code=301)
 
 @app.route("/beta")
 def beta():
@@ -36,7 +36,7 @@ def beta():
 	if not match:
 		return "There was an error getting the URL for the latest alpha"
 	url = match.group(1)
-	return redirect(url)
+	return redirect(url, code=301)
 
 @app.errorhandler(404)
 def on_not_found(error):
