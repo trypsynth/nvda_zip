@@ -1,4 +1,4 @@
-from flask import Flask, redirect, jsonify
+from flask import Flask, redirect, jsonify, render_template
 import requests
 import re
 
@@ -79,7 +79,7 @@ def beta_json():
 
 @app.errorhandler(404)
 def on_not_found(error):
-	return "Welcome!\n\nUse /xp to download a Windows XP (2017) release, or no parameter to download a current release."
+	return render_template("404.html")
 
 if __name__ == "__main__":
 	app.run(host = "0.0.0.0")
