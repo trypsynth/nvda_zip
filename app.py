@@ -1,4 +1,4 @@
-from flask import Flask, redirect
+from flask import Flask, redirect, jsonify
 import requests
 import re
 
@@ -29,9 +29,23 @@ def index():
 		return "There was an error getting the latest stable NVDA version"
 	return redirect(url, code=301)
 
+@app.route("/stable.json")
+def stable_json():
+	json = {}
+	url = get_url("stable")
+	if url:
+		json["url"] = url
+	return jsonify(json)
+
 @app.route("/xp")
 def xp():
 	return redirect("https://www.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe", code=301)
+
+@app.route("/xp.json")
+def xp_json():
+	json = {}
+	json["url"] = "https://www.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe"
+	return jsonify(json)
 
 @app.route("/alpha")
 def alpha():
@@ -40,12 +54,28 @@ def alpha():
 		return "There was an error getting the latest NVDA alpha version"
 	return redirect(url, code=301)
 
+@app.route("/alpha.json")
+def alpha_json():
+	json = {}
+	url = get_url("snapshot:alpha")
+	if url:
+		json["url"] = url
+	return jsonify(json)
+
 @app.route("/beta")
 def beta():
 	url = get_url("beta")
 	if not url:
 		return "There was an error getting the latest NVDA beta"
 	return redirect(url, code=301)
+
+@app.route("/beta.json")
+def beta_json():
+	json = {}
+	url = get_url("beta")
+	if url:
+		json["url"] = url
+	return jsonify(json)
 
 @app.errorhandler(404)
 def on_not_found(error):
