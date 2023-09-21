@@ -1,6 +1,7 @@
 from flask import Flask, redirect
 from lxml import html
 import requests
+import re
 
 app = Flask(__name__)
 
@@ -16,8 +17,26 @@ def index():
 	return redirect(url, code=302)
 
 @app.route("/xp")
-def index_xp():
+def xp():
 	return redirect("https://www.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe", code=302)
+
+@app.route("/alpha")
+def alpha():
+	r = requests.get("https://www.nvaccess.org/nvdaUpdateCheck?autoCheck=1&allowUsageStats=0&versionType=snapshot:alpha")
+	match = re.search(r"launcherUrl:\s*(.*)", r.text)
+	if not match:
+		return "There was an error getting the URL for the latest alpha"
+	url = match.group(1)
+	return redirect(url)
+
+@app.route("/beta")
+def beta():
+	r = requests.get("https://www.nvaccess.org/nvdaUpdateCheck?autoCheck=1&allowUsageStats=0&versionType=beta")
+	match = re.search(r"launcherUrl:\s*(.*)", r.text)
+	if not match:
+		return "There was an error getting the URL for the latest alpha"
+	url = match.group(1)
+	return redirect(url)
 
 @app.errorhandler(404)
 def on_not_found(error):
