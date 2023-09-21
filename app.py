@@ -22,7 +22,7 @@ def xp():
 
 @app.route("/alpha")
 def alpha():
-	r = requests.get("https://www.nvaccess.org/nvdaUpdateCheck?autoCheck=1&allowUsageStats=0&versionType=snapshot:alpha")
+	r = requests.get("https://www.nvaccess.org/nvdaUpdateCheck?versionType=snapshot:alpha")
 	match = re.search(r"launcherUrl:\s*(.*)", r.text)
 	if not match:
 		return "There was an error getting the URL for the latest alpha"
@@ -31,7 +31,7 @@ def alpha():
 
 @app.route("/beta")
 def beta():
-	r = requests.get("https://www.nvaccess.org/nvdaUpdateCheck?autoCheck=1&allowUsageStats=0&versionType=beta")
+	r = requests.get("https://www.nvaccess.org/nvdaUpdateCheck?versionType=beta")
 	match = re.search(r"launcherUrl:\s*(.*)", r.text)
 	if not match:
 		return "There was an error getting the URL for the latest beta"
