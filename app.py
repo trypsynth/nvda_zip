@@ -32,10 +32,11 @@ def alpha():
 @app.route("/beta")
 def beta():
 	r = requests.get("https://www.nvaccess.org/nvdaUpdateCheck?versionType=beta")
-	match = re.search(r"launcherUrl:\s*(.*)", r.text)
+	match = re.search(r"version:\s*(.*)", r.text)
 	if not match:
 		return "There was an error getting the URL for the latest beta"
-	url = match.group(1)
+	version = match.group(1).strip()
+	url = f"https://www.nvaccess.org/download/nvda/releases/{version}/nvda_{version}.exe"
 	return redirect(url, code=301)
 
 @app.errorhandler(404)
