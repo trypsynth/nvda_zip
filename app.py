@@ -6,6 +6,7 @@ import re
 app = Flask(__name__)
 
 def get_url(type):
+	print(type)
 	url = ""
 	r = requests.get(f"https://www.nvaccess.org/nvdaUpdateCheck?versionType={type}")
 	r.raise_for_status()
@@ -15,7 +16,8 @@ def get_url(type):
 			if not match:
 				return None
 			url = match.group(1)
-		case "beta", "stable":
+		case "beta" | "stable":
+			print(r.text)
 			match = re.search(r"version:\s*(.*)", r.text)
 			if not match:
 				return None
