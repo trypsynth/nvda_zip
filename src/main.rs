@@ -1,11 +1,17 @@
 use actix_web::{App, HttpResponse, HttpServer, Responder, web};
 use regex::Regex;
 use serde::Serialize;
-use tera::{Context, Tera};
+use askama::Template;
 
 #[derive(Serialize)]
 struct UrlResponse {
     url: String,
+}
+
+#[derive(Template)]
+#[template(path = "404.html")]
+struct NotFoundTemplate {
+	message: String,
 }
 
 async fn get_url(version_type: &str) -> Option<String> {
@@ -106,13 +112,11 @@ async fn beta_json() -> impl Responder {
 }
 
 async fn not_found() -> impl Responder {
-    let tera = Tera::new("templates/*").unwrap();
-    let mut context = Context::new();
-    context.insert("message", "The page you are looking for does not exist.");
-    let rendered = tera.render("404.html", &context).unwrap();
-    HttpResponse::NotFound()
-        .content_type("text/html")
-        .body(rendered)
+	let not_found_template = NotFoundTemplate {
+		message: String::from("The page you're looking for does not exist."),
+	};
+	let rendered = not_found_template.render().unwrap();
+	HttpResponse::NotFound().content_type("text/html").body(rendered)
 }
 
 #[actix_web::main]
