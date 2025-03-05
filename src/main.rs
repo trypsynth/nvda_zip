@@ -1,6 +1,5 @@
 use actix_web::{App, HttpResponse, HttpServer, Responder, web};
 use regex::Regex;
-use reqwest;
 use serde::Serialize;
 use tera::{Context, Tera};
 
