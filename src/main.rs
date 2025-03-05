@@ -1,8 +1,8 @@
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-use reqwest;
+use actix_web::{App, HttpResponse, HttpServer, Responder, web};
 use regex::Regex;
+use reqwest;
 use serde::Serialize;
-use tera::{Tera, Context};
+use tera::{Context, Tera};
 
 #[derive(Serialize)]
 struct UrlResponse {
@@ -10,7 +10,10 @@ struct UrlResponse {
 }
 
 async fn get_url(version_type: &str) -> Option<String> {
-    let url = format!("https://www.nvaccess.org/nvdaUpdateCheck?versionType={}", version_type);
+    let url = format!(
+        "https://www.nvaccess.org/nvdaUpdateCheck?versionType={}",
+        version_type
+    );
     let response = reqwest::get(&url).await.ok()?;
     let body = response.text().await.ok()?;
     let regex = match version_type {
@@ -23,7 +26,10 @@ async fn get_url(version_type: &str) -> Option<String> {
         "snapshot:alpha" => captured.get(1).map(|m| m.as_str().to_string()),
         "beta" | "stable" => {
             let version = captured.get(1)?.as_str().trim();
-            Some(format!("https://www.nvaccess.org/download/nvda/releases/{}/nvda_{}.exe", version, version))
+            Some(format!(
+                "https://www.nvaccess.org/download/nvda/releases/{}/nvda_{}.exe",
+                version, version
+            ))
         }
         _ => None,
     }
@@ -31,9 +37,12 @@ async fn get_url(version_type: &str) -> Option<String> {
 
 async fn index() -> impl Responder {
     if let Some(url) = get_url("stable").await {
-        HttpResponse::Found().append_header(("Location", url)).finish()
+        HttpResponse::Found()
+            .append_header(("Location", url))
+            .finish()
     } else {
-        HttpResponse::InternalServerError().body("There was an error getting the latest stable NVDA version")
+        HttpResponse::InternalServerError()
+            .body("There was an error getting the latest stable NVDA version")
     }
 }
 
@@ -46,7 +55,12 @@ async fn stable_json() -> impl Responder {
 }
 
 async fn xp() -> impl Responder {
-    HttpResponse::Found().append_header(("Location", "https://www.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe")).finish()
+    HttpResponse::Found()
+        .append_header((
+            "Location",
+            "https://www.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe",
+        ))
+        .finish()
 }
 
 async fn xp_json() -> impl Responder {
@@ -57,9 +71,12 @@ async fn xp_json() -> impl Responder {
 
 async fn alpha() -> impl Responder {
     if let Some(url) = get_url("snapshot:alpha").await {
-        HttpResponse::Found().append_header(("Location", url)).finish()
+        HttpResponse::Found()
+            .append_header(("Location", url))
+            .finish()
     } else {
-        HttpResponse::InternalServerError().body("There was an error getting the latest NVDA alpha version")
+        HttpResponse::InternalServerError()
+            .body("There was an error getting the latest NVDA alpha version")
     }
 }
 
@@ -73,7 +90,9 @@ async fn alpha_json() -> impl Responder {
 
 async fn beta() -> impl Responder {
     if let Some(url) = get_url("beta").await {
-        HttpResponse::Found().append_header(("Location", url)).finish()
+        HttpResponse::Found()
+            .append_header(("Location", url))
+            .finish()
     } else {
         HttpResponse::InternalServerError().body("There was an error getting the latest NVDA beta")
     }
