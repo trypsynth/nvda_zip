@@ -1,4 +1,4 @@
-use actix_web::{App, HttpResponse, HttpServer, Responder, web};
+use actix_web::{App, HttpResponse, HttpServer, Responder, middleware, web};
 use askama::Template;
 use regex::Regex;
 use serde::Serialize;
@@ -123,8 +123,11 @@ async fn not_found() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
     HttpServer::new(|| {
         App::new()
+            .wrap(middleware::Logger::default())
             .route("/", web::get().to(index))
             .route("/stable.json", web::get().to(stable_json))
             .route("/xp", web::get().to(xp))
@@ -135,7 +138,7 @@ async fn main() -> std::io::Result<()> {
             .route("/beta.json", web::get().to(beta_json))
             .default_service(web::to(not_found))
     })
-    .bind("0.0.0.0:8080")?
+    .bind_auto_h2c(("0.0.0.0", 5000))?
     .run()
     .await
 }
