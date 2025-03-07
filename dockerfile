@@ -1,6 +1,6 @@
 FROM rust:1.85.0-alpine3.21 AS build
 RUN apk add --no-cache build-base openssl-dev
-ENV RUSTFLAGS="-Clink-self-contained=off -Ctarget-feature=-crt-static"
+ENV RUSTFLAGS="-Ctarget-feature=-crt-static"
 RUN cargo install --locked cargo-auditable@0.6.6
 WORKDIR /app
 ADD . .
