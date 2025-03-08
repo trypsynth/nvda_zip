@@ -32,7 +32,7 @@ async fn get_url(version_type: &str) -> Option<String> {
         "beta" | "stable" => {
             let version = captured.get(1)?.as_str().trim();
             Some(format!(
-                "https://www.nvaccess.org/download/nvda/releases/{}/nvda_{}.exe",
+                "https://download.nvaccess.org/download/releases/{}/nvda_{}.exe",
                 version, version
             ))
         }
@@ -63,14 +63,14 @@ async fn xp() -> impl Responder {
     HttpResponse::Found()
         .append_header((
             "Location",
-            "https://www.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe",
+            "https://download.nvaccess.org/download/releases/2017.3/nvda_2017.3.exe",
         ))
         .finish()
 }
 
 async fn xp_json() -> impl Responder {
     HttpResponse::Ok().json(UrlResponse {
-        url: "https://www.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe".to_string(),
+        url: "https://download.nvaccess.org/download/releases/2017.3/nvda_2017.3.exe".to_string(),
     })
 }
 
