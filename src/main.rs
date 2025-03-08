@@ -16,7 +16,7 @@ struct NotFoundTemplate {
 
 async fn get_url(version_type: &str) -> Option<String> {
     let url = format!(
-        "https://www.nvaccess.org/nvdaUpdateCheck?versionType={}",
+        "https://download.nvaccess.org/nvdaUpdateCheck?versionType={}",
         version_type
     );
     let response = reqwest::get(&url).await.ok()?;
