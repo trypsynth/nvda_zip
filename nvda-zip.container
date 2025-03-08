@@ -1,0 +1,10 @@
+[Container]
+Image=localhost/nvda_zip:latest
+PodmanArgs=--network host
+RunInit=no
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
