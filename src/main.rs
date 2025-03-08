@@ -1,7 +1,33 @@
 use actix_web::{App, HttpResponse, HttpServer, Responder, middleware, web};
 use askama::Template;
 use regex::Regex;
+use reqwest::Client;
 use serde::Serialize;
+use std::{
+    collections::HashMap,
+    sync::LazyLock,
+    time::{Duration, Instant},
+};
+use tokio::sync::Mutex;
+
+const CACHE_TTL: Duration = Duration::from_secs(30);
+
+struct VersionEntry {
+    url: String,
+    last_refresh: Instant,
+}
+
+struct State {
+    client: Client,
+    versions: HashMap<&'static str, VersionEntry>,
+}
+
+static STATE: LazyLock<Mutex<State>> = LazyLock::new(|| {
+    Mutex::new(State {
+        client: Client::new(),
+        versions: HashMap::new(),
+    })
+});
 
 #[derive(Serialize)]
 struct UrlResponse {
@@ -14,30 +40,56 @@ struct NotFoundTemplate {
     message: String,
 }
 
-async fn get_url(version_type: &str) -> Option<String> {
-    let url = format!(
-        "https://download.nvaccess.org/nvdaUpdateCheck?versionType={}",
-        version_type
-    );
-    let response = reqwest::get(&url).await.ok()?;
-    let body = response.text().await.ok()?;
-    let regex = match version_type {
-        "snapshot:alpha" => Regex::new(r"launcherUrl:\s*(.*)").ok()?,
-        "beta" | "stable" => Regex::new(r"version:\s*(.*)").ok()?,
-        _ => return None,
-    };
-    let captured = regex.captures(&body)?;
-    match version_type {
-        "snapshot:alpha" => captured.get(1).map(|m| m.as_str().to_string()),
-        "beta" | "stable" => {
-            let version = captured.get(1)?.as_str().trim();
-            Some(format!(
-                "https://download.nvaccess.org/download/releases/{}/nvda_{}.exe",
-                version, version
-            ))
+async fn get_url(version_type: &'static str) -> Option<String> {
+    // Cancel safety: It's safe to cancel the future returned by this function
+    // because the data guarded by the mutex is never left in an invalid state
+    // across an await.
+    let mut state = STATE.lock().await;
+    if let Some(entry) = state.versions.get(&version_type) {
+        let age = Instant::now().duration_since(entry.last_refresh);
+        if age < CACHE_TTL {
+            return Some(entry.url.clone());
         }
-        _ => None,
     }
+    // If we're going to make a request to the NVDA download server, then
+    // spawn a task and await its result so that request can't be canceled.
+    // Otherwise, someone could DoS NV Access by repeatedly starting and then
+    // canceling requests.
+    tokio::spawn(async move {
+        let check_url = format!(
+            "https://download.nvaccess.org/nvdaUpdateCheck?versionType={}",
+            version_type
+        );
+        let response = state.client.get(&check_url).send().await.ok()?;
+        let body = response.text().await.ok()?;
+        let regex = match version_type {
+            "snapshot:alpha" => Regex::new(r"launcherUrl:\s*(.*)").ok()?,
+            "beta" | "stable" => Regex::new(r"version:\s*(.*)").ok()?,
+            _ => return None,
+        };
+        let captured = regex.captures(&body)?;
+        let url = match version_type {
+            "snapshot:alpha" => captured.get(1).map(|m| m.as_str().to_string()),
+            "beta" | "stable" => {
+                let version = captured.get(1)?.as_str().trim();
+                Some(format!(
+                    "https://download.nvaccess.org/download/releases/{}/nvda_{}.exe",
+                    version, version
+                ))
+            }
+            _ => None,
+        }?;
+        state.versions.insert(
+            version_type,
+            VersionEntry {
+                url: url.clone(),
+                last_refresh: Instant::now(),
+            },
+        );
+        Some(url)
+    })
+    .await
+    .unwrap()
 }
 
 async fn index() -> impl Responder {
