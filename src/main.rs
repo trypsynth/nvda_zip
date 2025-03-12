@@ -36,9 +36,7 @@ struct UrlResponse {
 
 #[derive(Template)]
 #[template(path = "404.html")]
-struct NotFoundTemplate {
-    message: String,
-}
+struct NotFoundTemplate;
 
 async fn get_url(version_type: &'static str) -> Option<String> {
     // Cancel safety: It's safe to cancel the future returned by this function
@@ -164,9 +162,7 @@ async fn beta_json() -> impl Responder {
 }
 
 async fn not_found() -> impl Responder {
-    let not_found_template = NotFoundTemplate {
-        message: String::from("The page you're looking for does not exist."),
-    };
+    let not_found_template = NotFoundTemplate;
     let rendered = not_found_template.render().unwrap();
     HttpResponse::NotFound()
         .content_type("text/html")
