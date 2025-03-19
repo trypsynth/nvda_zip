@@ -124,6 +124,22 @@ async fn xp_json() -> impl Responder {
     })
 }
 
+async fn win7() -> impl Responder {
+    HttpResponse::Found()
+        .append_header((
+            "Location",
+            "https://download.nvaccess.org/download/releases/2023.3.4/nvda_2023.3.4.exe",
+        ))
+        .finish()
+}
+
+async fn win7_json() -> impl Responder {
+    HttpResponse::Ok().json(UrlResponse {
+        url: "https://download.nvaccess.org/download/releases/2023.3.4/nvda_2023.3.4.exe"
+            .to_string(),
+    })
+}
+
 async fn alpha() -> impl Responder {
     if let Some(url) = get_url("snapshot:alpha").await {
         HttpResponse::Found()
@@ -179,6 +195,8 @@ async fn main() -> std::io::Result<()> {
             .route("/stable.json", web::get().to(stable_json))
             .route("/xp", web::get().to(xp))
             .route("/xp.json", web::get().to(xp_json))
+            .route("/win7", web::get().to(win7))
+            .route("/win7.json", web::get().to(win7_json))
             .route("/alpha", web::get().to(alpha))
             .route("/alpha.json", web::get().to(alpha_json))
             .route("/beta", web::get().to(beta))
