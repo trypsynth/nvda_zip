@@ -17,7 +17,7 @@ struct UrlResponse {
 struct NotFoundTemplate;
 
 async fn index(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let mut nvda_url = nvda_url.lock().await;
+    let nvda_url = nvda_url.lock().await;
     match nvda_url.get_url(VersionType::Stable).await {
         Some(url) => HttpResponse::Found()
             .append_header(("Location", url))
@@ -29,7 +29,7 @@ async fn index(nvda_url: SharedNvdaUrl) -> impl Responder {
 }
 
 async fn stable_json(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let mut nvda_url = nvda_url.lock().await;
+    let nvda_url = nvda_url.lock().await;
     match nvda_url.get_url(VersionType::Stable).await {
         Some(url) => HttpResponse::Ok().json(UrlResponse { url }),
         None => HttpResponse::InternalServerError().json(UrlResponse { url: String::new() }),
@@ -47,7 +47,7 @@ async fn json_response(url: &'static str) -> impl Responder {
 }
 
 async fn alpha(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let mut nvda_url = nvda_url.lock().await;
+    let nvda_url = nvda_url.lock().await;
     match nvda_url.get_url(VersionType::Alpha).await {
         Some(url) => HttpResponse::Found()
             .append_header(("Location", url))
@@ -59,7 +59,7 @@ async fn alpha(nvda_url: SharedNvdaUrl) -> impl Responder {
 }
 
 async fn alpha_json(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let mut nvda_url = nvda_url.lock().await;
+    let nvda_url = nvda_url.lock().await;
     match nvda_url.get_url(VersionType::Alpha).await {
         Some(url) => HttpResponse::Ok().json(UrlResponse { url }),
         None => HttpResponse::InternalServerError().json(UrlResponse { url: String::new() }),
@@ -67,7 +67,7 @@ async fn alpha_json(nvda_url: SharedNvdaUrl) -> impl Responder {
 }
 
 async fn beta(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let mut nvda_url = nvda_url.lock().await;
+    let nvda_url = nvda_url.lock().await;
     match nvda_url.get_url(VersionType::Beta).await {
         Some(url) => HttpResponse::Found()
             .append_header(("Location", url))
@@ -77,7 +77,7 @@ async fn beta(nvda_url: SharedNvdaUrl) -> impl Responder {
 }
 
 async fn beta_json(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let mut nvda_url = nvda_url.lock().await;
+    let nvda_url = nvda_url.lock().await;
     match nvda_url.get_url(VersionType::Beta).await {
         Some(url) => HttpResponse::Ok().json(UrlResponse { url }),
         None => HttpResponse::InternalServerError().json(UrlResponse { url: String::new() }),
