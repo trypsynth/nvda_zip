@@ -1,6 +1,6 @@
 [package]
 name = "nvda_url"
-version = "0.1.0"
+version = "0.1.1"
 description = "Retrieve download URLs for the NVDA screen reader."
 license = "Zlib"
 repository = "https://github.com/trypsynth/nvda_zip"

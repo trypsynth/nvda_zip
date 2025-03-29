@@ -9,22 +9,25 @@ use tokio::sync::Mutex;
 
 const CACHE_TTL: Duration = Duration::from_secs(30);
 
+/// Direct download link for NVDA 2017.3 (Windows XP).
 pub const XP_URL: &str = "https://download.nvaccess.org/download/releases/2017.3/nvda_2017.3.exe";
+
+/// Direct download link for NVDA 2023.3.4 (Windows 7).
 pub const WIN7_URL: &str =
     "https://download.nvaccess.org/download/releases/2023.3.4/nvda_2023.3.4.exe";
 
+/// Represents the different NVDA release channels.
 #[derive(Clone, Eq, Hash, PartialEq, Debug)]
 pub enum VersionType {
+    /// Official stable releases.
     Stable,
+    /// Pre-release beta versions.
     Beta,
+    /// Snapshot alpha builds.
     Alpha,
 }
 
-struct VersionEntry {
-    url: String,
-    last_refresh: Instant,
-}
-
+/// Fetches and caches NVDA download URLs.
 #[derive(Default)]
 pub struct NvdaUrl {
     client: Client,
@@ -32,6 +35,17 @@ pub struct NvdaUrl {
 }
 
 impl NvdaUrl {
+    /// Retrieves the latest download URL for the specified NVDA version type.
+    ///
+    /// If a cached URL is still valid, it is returned. Otherwise, a new request is made.
+    ///
+    /// # Arguments
+    ///
+    /// * `version_type` - The type of NVDA version to fetch.
+    ///
+    /// # Returns
+    ///
+    /// An `Option<String>` containing the URL if successful, or `None` if an error occurs.
     pub async fn get_url(&self, version_type: VersionType) -> Option<String> {
         let now = Instant::now();
         let mut cache = self.versions.lock().await;
@@ -50,7 +64,14 @@ impl NvdaUrl {
         );
         Some(url)
     }
+}
 
+struct VersionEntry {
+    url: String,
+    last_refresh: Instant,
+}
+
+impl NvdaUrl {
     async fn fetch_url(&self, version_type: &VersionType) -> Option<String> {
         let version_str = match version_type {
             VersionType::Alpha => "snapshot:alpha",
