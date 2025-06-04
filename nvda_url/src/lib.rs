@@ -10,11 +10,11 @@ use tokio::sync::Mutex;
 const CACHE_TTL: Duration = Duration::from_secs(30);
 
 /// Direct download link for NVDA 2017.3 (Windows XP).
-pub const XP_URL: &str = "https://download.nvaccess.org/download/releases/2017.3/nvda_2017.3.exe";
+pub const XP_URL: &str = "https://download.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe";
 
 /// Direct download link for NVDA 2023.3.4 (Windows 7).
 pub const WIN7_URL: &str =
-    "https://download.nvaccess.org/download/releases/2023.3.4/nvda_2023.3.4.exe";
+    "https://download.nvaccess.org/download/nvda/releases/2023.3.4/nvda_2023.3.4.exe";
 
 /// Represents the different NVDA release channels.
 #[derive(Clone, Eq, Hash, PartialEq, Debug)]
@@ -105,7 +105,7 @@ impl NvdaUrl {
 fn format_download_url(version: &str) -> String {
     let version = version.trim();
     format!(
-        "https://download.nvaccess.org/download/releases/{}/nvda_{}.exe",
+        "https://download.nvaccess.org/download/nvda/releases/{}/nvda_{}.exe",
         version, version
     )
 }
