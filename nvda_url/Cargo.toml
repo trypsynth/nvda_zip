@@ -8,5 +8,5 @@ edition = "2024"
 
 [dependencies]
 regex = "1.11.1"
-reqwest = { version = "0.12.15", default-features = false, features = ["http2", "rustls-tls-webpki-roots"] }
-tokio = { version = "1.44.1", default-features = false, features = ["rt", "sync"] }
+reqwest = { version = "0.12.19", default-features = false, features = ["http2", "rustls-tls-webpki-roots"] }
+tokio = { version = "1.45.1", default-features = false, features = ["rt", "sync"] }
