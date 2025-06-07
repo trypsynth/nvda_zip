@@ -35,6 +35,11 @@ pub struct NvdaUrl {
     versions: Mutex<HashMap<VersionType, VersionEntry>>,
 }
 
+struct VersionEntry {
+    url: String,
+    last_refresh: Instant,
+}
+
 impl NvdaUrl {
     /// Retrieves the latest download URL for the specified NVDA version type.
     ///
@@ -65,14 +70,7 @@ impl NvdaUrl {
         );
         Some(url)
     }
-}
 
-struct VersionEntry {
-    url: String,
-    last_refresh: Instant,
-}
-
-impl NvdaUrl {
     async fn fetch_url(&self, version_type: &VersionType) -> Option<String> {
         let version_str = match version_type {
             VersionType::Alpha => "snapshot:alpha",
