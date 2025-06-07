@@ -1,4 +1,4 @@
-use actix_web::{App, HttpResponse, HttpServer, Responder, middleware, web};
+use actix_web::{App, HttpResponse, HttpServer, Result as ActixResult, middleware, web};
 use askama::Template;
 use nvda_url::{NvdaUrl, VersionType, WIN7_URL, XP_URL};
 use serde::Serialize;
@@ -16,101 +16,110 @@ struct UrlResponse {
 #[template(path = "404.html")]
 struct NotFoundTemplate;
 
-async fn index(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let nvda_url = nvda_url.lock().await;
-    match nvda_url.get_url(VersionType::Stable).await {
-        Some(url) => HttpResponse::Found()
-            .append_header(("Location", url))
-            .finish(),
-        None => {
-            HttpResponse::InternalServerError().body("Error fetching latest stable NVDA version")
-        }
-    }
-}
-
-async fn stable_json(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let nvda_url = nvda_url.lock().await;
-    match nvda_url.get_url(VersionType::Stable).await {
-        Some(url) => HttpResponse::Ok().json(UrlResponse { url }),
-        None => HttpResponse::InternalServerError().json(UrlResponse { url: String::new() }),
-    }
-}
-
-async fn redirect(url: &'static str) -> impl Responder {
+fn redirect_to(url: &str) -> HttpResponse {
     HttpResponse::Found()
         .append_header(("Location", url))
         .finish()
 }
 
-async fn json_response(url: &'static str) -> impl Responder {
-    HttpResponse::Ok().json(UrlResponse { url: url.into() })
+fn json_url_response(url: String) -> HttpResponse {
+    HttpResponse::Ok().json(UrlResponse { url })
 }
 
-async fn alpha(nvda_url: SharedNvdaUrl) -> impl Responder {
+async fn version_handler(
+    nvda_url: SharedNvdaUrl,
+    version_type: VersionType,
+    as_json: bool,
+) -> ActixResult<HttpResponse> {
     let nvda_url = nvda_url.lock().await;
-    match nvda_url.get_url(VersionType::Alpha).await {
-        Some(url) => HttpResponse::Found()
-            .append_header(("Location", url))
-            .finish(),
+    match nvda_url.get_url(version_type).await {
+        Some(url) => {
+            if as_json {
+                Ok(json_url_response(url))
+            } else {
+                Ok(redirect_to(&url))
+            }
+        }
         None => {
-            HttpResponse::InternalServerError().body("Error fetching latest NVDA alpha version")
+            if as_json {
+                Ok(HttpResponse::InternalServerError().json(UrlResponse { url: String::new() }))
+            } else {
+                Ok(HttpResponse::InternalServerError().body("Error fetching latest NVDA version"))
+            }
         }
     }
 }
 
-async fn alpha_json(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let nvda_url = nvda_url.lock().await;
-    match nvda_url.get_url(VersionType::Alpha).await {
-        Some(url) => HttpResponse::Ok().json(UrlResponse { url }),
-        None => HttpResponse::InternalServerError().json(UrlResponse { url: String::new() }),
-    }
+async fn index(nvda_url: SharedNvdaUrl) -> ActixResult<HttpResponse> {
+    version_handler(nvda_url, VersionType::Stable, false).await
 }
 
-async fn beta(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let nvda_url = nvda_url.lock().await;
-    match nvda_url.get_url(VersionType::Beta).await {
-        Some(url) => HttpResponse::Found()
-            .append_header(("Location", url))
-            .finish(),
-        None => HttpResponse::InternalServerError().body("Error fetching latest NVDA beta version"),
-    }
+async fn stable_json(nvda_url: SharedNvdaUrl) -> ActixResult<HttpResponse> {
+    version_handler(nvda_url, VersionType::Stable, true).await
 }
 
-async fn beta_json(nvda_url: SharedNvdaUrl) -> impl Responder {
-    let nvda_url = nvda_url.lock().await;
-    match nvda_url.get_url(VersionType::Beta).await {
-        Some(url) => HttpResponse::Ok().json(UrlResponse { url }),
-        None => HttpResponse::InternalServerError().json(UrlResponse { url: String::new() }),
-    }
+async fn alpha(nvda_url: SharedNvdaUrl) -> ActixResult<HttpResponse> {
+    version_handler(nvda_url, VersionType::Alpha, false).await
 }
 
-async fn not_found() -> impl Responder {
+async fn alpha_json(nvda_url: SharedNvdaUrl) -> ActixResult<HttpResponse> {
+    version_handler(nvda_url, VersionType::Alpha, true).await
+}
+
+async fn beta(nvda_url: SharedNvdaUrl) -> ActixResult<HttpResponse> {
+    version_handler(nvda_url, VersionType::Beta, false).await
+}
+
+async fn beta_json(nvda_url: SharedNvdaUrl) -> ActixResult<HttpResponse> {
+    version_handler(nvda_url, VersionType::Beta, true).await
+}
+
+async fn xp_redirect() -> ActixResult<HttpResponse> {
+    Ok(redirect_to(XP_URL))
+}
+
+async fn xp_json() -> ActixResult<HttpResponse> {
+    Ok(json_url_response(XP_URL.to_string()))
+}
+
+async fn win7_redirect() -> ActixResult<HttpResponse> {
+    Ok(redirect_to(WIN7_URL))
+}
+
+async fn win7_json() -> ActixResult<HttpResponse> {
+    Ok(json_url_response(WIN7_URL.to_string()))
+}
+
+async fn not_found() -> ActixResult<HttpResponse> {
     match NotFoundTemplate.render() {
-        Ok(body) => HttpResponse::NotFound()
+        Ok(body) => Ok(HttpResponse::NotFound()
             .content_type("text/html")
-            .body(body),
-        Err(_) => HttpResponse::InternalServerError().body("Error rendering 404 page"),
+            .body(body)),
+        Err(_) => Ok(HttpResponse::InternalServerError().body("Error rendering 404 page")),
     }
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    let nvda_url = Arc::new(Mutex::new(NvdaUrl::default()));
+    let nvda_url = web::Data::new(Arc::new(Mutex::new(NvdaUrl::default())));
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(nvda_url.clone()))
+            .app_data(nvda_url.clone())
             .wrap(middleware::Logger::default())
-            .route("/", web::get().to(index))
-            .route("/stable.json", web::get().to(stable_json))
-            .route("/xp", web::get().to(|| redirect(XP_URL)))
-            .route("/xp.json", web::get().to(|| json_response(XP_URL)))
-            .route("/win7", web::get().to(|| redirect(WIN7_URL)))
-            .route("/win7.json", web::get().to(|| json_response(WIN7_URL)))
-            .route("/alpha", web::get().to(alpha))
-            .route("/alpha.json", web::get().to(alpha_json))
-            .route("/beta", web::get().to(beta))
-            .route("/beta.json", web::get().to(beta_json))
+            .service(
+                web::scope("")
+                    .route("/", web::get().to(index))
+                    .route("/stable.json", web::get().to(stable_json))
+                    .route("/alpha", web::get().to(alpha))
+                    .route("/alpha.json", web::get().to(alpha_json))
+                    .route("/beta", web::get().to(beta))
+                    .route("/beta.json", web::get().to(beta_json))
+                    .route("/xp", web::get().to(xp_redirect))
+                    .route("/xp.json", web::get().to(xp_json))
+                    .route("/win7", web::get().to(win7_redirect))
+                    .route("/win7.json", web::get().to(win7_json)),
+            )
             .default_service(web::to(not_found))
     })
     .bind_auto_h2c(("0.0.0.0", 5000))?

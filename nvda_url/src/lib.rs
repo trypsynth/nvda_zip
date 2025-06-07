@@ -10,7 +10,8 @@ use tokio::sync::Mutex;
 const CACHE_TTL: Duration = Duration::from_secs(30);
 
 /// Direct download link for NVDA 2017.3 (Windows XP).
-pub const XP_URL: &str = "https://download.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe";
+pub const XP_URL: &str =
+    "https://download.nvaccess.org/download/nvda/releases/2017.3/nvda_2017.3.exe";
 
 /// Direct download link for NVDA 2023.3.4 (Windows 7).
 pub const WIN7_URL: &str =
