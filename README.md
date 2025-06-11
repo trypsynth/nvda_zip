@@ -14,4 +14,4 @@ This is a simple Actix-web application that runs at `https://nvda.zip`, providin
 * `/beta.json`: Get a JSON response containing the latest NVDA beta's direct download link.
 
 ## License
-This project is licensed under the [[Zlib license](LICENSE).
+This project is licensed under the [[Zlib license](license.md).
