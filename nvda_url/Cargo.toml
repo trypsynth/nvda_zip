@@ -2,7 +2,7 @@
 name = "nvda_url"
 version = "0.1.2"
 description = "Retrieve download URLs for the NVDA screen reader."
-license = "Zlib"
+license = "MIT"
 repository = "https://github.com/trypsynth/nvda_zip"
 edition = "2024"
 
