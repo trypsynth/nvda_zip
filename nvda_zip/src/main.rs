@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+
 use actix_web::{App, HttpResponse, HttpServer, Result as ActixResult, middleware, web};
 use askama::Template;
 use nvda_url::{NvdaUrl, VersionType, WIN7_URL, XP_URL};
@@ -32,22 +34,22 @@ async fn version_handler(
     as_json: bool,
 ) -> ActixResult<HttpResponse> {
     let nvda_url = nvda_url.lock().await;
-    match nvda_url.get_url(version_type).await {
-        Some(url) => {
-            if as_json {
-                Ok(json_url_response(url))
-            } else {
-                Ok(redirect_to(&url))
-            }
-        }
-        None => {
+    (nvda_url.get_url(version_type).await).map_or_else(
+        || {
             if as_json {
                 Ok(HttpResponse::InternalServerError().json(UrlResponse { url: String::new() }))
             } else {
                 Ok(HttpResponse::InternalServerError().body("Error fetching latest NVDA version"))
             }
-        }
-    }
+        },
+        |url| {
+            if as_json {
+                Ok(json_url_response(url))
+            } else {
+                Ok(redirect_to(&url))
+            }
+        },
+    )
 }
 
 async fn index(nvda_url: SharedNvdaUrl) -> ActixResult<HttpResponse> {
@@ -91,12 +93,14 @@ async fn win7_json() -> ActixResult<HttpResponse> {
 }
 
 async fn not_found() -> ActixResult<HttpResponse> {
-    match NotFoundTemplate.render() {
-        Ok(body) => Ok(HttpResponse::NotFound()
-            .content_type("text/html")
-            .body(body)),
-        Err(_) => Ok(HttpResponse::InternalServerError().body("Error rendering 404 page")),
-    }
+    NotFoundTemplate.render().map_or_else(
+        |_| Ok(HttpResponse::InternalServerError().body("Error rendering 404 page")),
+        |body| {
+            Ok(HttpResponse::NotFound()
+                .content_type("text/html")
+                .body(body))
+        },
+    )
 }
 
 #[actix_web::main]
