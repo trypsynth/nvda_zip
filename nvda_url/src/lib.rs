@@ -1,10 +1,8 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 
-use regex::Regex;
 use reqwest::Client;
 use std::{
     collections::HashMap,
-    sync::LazyLock,
     time::{Duration, Instant},
 };
 use tokio::sync::Mutex;
@@ -15,6 +13,33 @@ const CACHE_TTL: Duration = Duration::from_secs(30);
 pub const XP_URL: &str = "https://download.nvaccess.org/releases/2017.3/nvda_2017.3.exe";
 /// Direct download link for NVDA 2023.3.4 (Windows 7).
 pub const WIN7_URL: &str = "https://download.nvaccess.org/releases/2023.3.4/nvda_2023.3.4.exe";
+
+/// NV Access has their own custom format for NVDA's update API, this lets us parse only the fields we care about out of it.
+#[derive(Debug)]
+pub struct UpdateInfo {
+    pub version: Option<String>,
+    pub launcher_url: Option<String>,
+}
+
+impl UpdateInfo {
+    pub fn parse(data: &str) -> Self {
+        let mut version = None;
+        let mut launcher_url = None;
+        for line in data.lines() {
+            if let Some((key, value)) = line.split_once(": ") {
+                match key {
+                    "version" => version = Some(value.to_string()),
+                    "launcherUrl" => launcher_url = Some(value.to_string()),
+                    _ => {}
+                }
+            }
+        }
+        Self {
+            version,
+            launcher_url,
+        }
+    }
+}
 
 /// Represents the different NVDA release channels.
 #[derive(Clone, Eq, Hash, PartialEq, Debug)]
@@ -33,17 +58,6 @@ impl VersionType {
             Self::Alpha => "snapshot:alpha",
             Self::Beta => "beta",
             Self::Stable => "stable",
-        }
-    }
-
-    fn regex(&self) -> &'static Regex {
-        static ALPHA: LazyLock<Regex> =
-            LazyLock::new(|| Regex::new(r"launcherUrl:\s*(\S+)").unwrap());
-        static VERSION: LazyLock<Regex> =
-            LazyLock::new(|| Regex::new(r"version:\s*(\S+)").unwrap());
-        match self {
-            Self::Alpha => &ALPHA,
-            Self::Beta | Self::Stable => &VERSION,
         }
     }
 }
@@ -82,17 +96,11 @@ impl NvdaUrl {
 
     async fn fetch_url(&self, version_type: &VersionType) -> Option<String> {
         let url = format!(
-            "https://download.nvaccess.org/nvdaUpdateCheck?versionType={}",
+            "https://api.nvaccess.org/nvdaUpdateCheck?versionType={}",
             version_type.api_param()
         );
         let body = self.client.get(&url).send().await.ok()?.text().await.ok()?;
-        let version = version_type.regex().captures(&body)?.get(1)?.as_str();
-        Some(match version_type {
-            VersionType::Alpha => version.to_owned(),
-            _ => format!(
-                "https://download.nvaccess.org/releases/{0}/nvda_{0}.exe",
-                version.trim()
-            ),
-        })
+        let info = UpdateInfo::parse(&body);
+        info.launcher_url
     }
 }
