@@ -26,9 +26,8 @@ impl UpdateInfo {
         let mut launcher_url = None;
         for line in data.lines() {
             if let Some((key, value)) = line.split_once(": ") {
-                match key {
-                    "launcherUrl" => launcher_url = Some(value.to_string()),
-                    _ => {}
+                if key == "launcherUrl" {
+                    launcher_url = Some(value.to_string());
                 }
             }
         }
@@ -39,7 +38,7 @@ impl UpdateInfo {
 }
 
 /// Represents the different NVDA release channels.
-#[derive(Clone, Eq, Hash, PartialEq, Debug)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq, Debug)]
 pub enum VersionType {
     /// Official stable releases.
     Stable,
@@ -50,7 +49,7 @@ pub enum VersionType {
 }
 
 impl VersionType {
-    const fn api_param(&self) -> &'static str {
+    const fn as_str(self) -> &'static str {
         match self {
             Self::Alpha => "snapshot:alpha",
             Self::Beta => "beta",
@@ -94,7 +93,7 @@ impl NvdaUrl {
     async fn fetch_url(&self, version_type: &VersionType) -> Option<String> {
         let url = format!(
             "https://api.nvaccess.org/nvdaUpdateCheck?versionType={}",
-            version_type.api_param()
+            version_type.as_str()
         );
         let body = self.client.get(&url).send().await.ok()?.text().await.ok()?;
         let info = UpdateInfo::parse(&body);
