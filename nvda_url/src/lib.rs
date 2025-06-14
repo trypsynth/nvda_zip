@@ -22,6 +22,7 @@ pub struct UpdateInfo {
 }
 
 impl UpdateInfo {
+    #[must_use]
     pub fn parse(data: &str) -> Self {
         let mut version = None;
         let mut launcher_url = None;
