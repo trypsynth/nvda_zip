@@ -22,7 +22,7 @@ struct UpdateInfo {
 
 impl UpdateInfo {
     #[must_use]
-    pub fn parse(data: &str) -> Self {
+    fn parse(data: &str) -> Self {
         let mut launcher_url = None;
         for line in data.lines() {
             if let Some((key, value)) = line.split_once(": ") {
