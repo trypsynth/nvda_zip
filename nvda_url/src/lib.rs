@@ -16,27 +16,23 @@ pub const WIN7_URL: &str = "https://download.nvaccess.org/releases/2023.3.4/nvda
 
 /// NV Access has their own custom format for NVDA's update API, this lets us parse only the fields we care about out of it.
 #[derive(Debug)]
-pub struct UpdateInfo {
-    pub version: Option<String>,
+struct UpdateInfo {
     pub launcher_url: Option<String>,
 }
 
 impl UpdateInfo {
     #[must_use]
     pub fn parse(data: &str) -> Self {
-        let mut version = None;
         let mut launcher_url = None;
         for line in data.lines() {
             if let Some((key, value)) = line.split_once(": ") {
                 match key {
-                    "version" => version = Some(value.to_string()),
                     "launcherUrl" => launcher_url = Some(value.to_string()),
                     _ => {}
                 }
             }
         }
         Self {
-            version,
             launcher_url,
         }
     }
