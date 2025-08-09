@@ -1,10 +1,11 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 
+use std::sync::Arc;
+
 use actix_web::{App, HttpResponse, HttpServer, Result as ActixResult, middleware, web};
 use askama::Template;
 use nvda_url::{NvdaUrl, VersionType, WIN7_URL, XP_URL};
 use serde::Serialize;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 type SharedNvdaUrl = web::Data<Arc<Mutex<NvdaUrl>>>;

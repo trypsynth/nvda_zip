@@ -1,10 +1,11 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 
-use reqwest::Client;
 use std::{
 	collections::HashMap,
 	time::{Duration, Instant},
 };
+
+use reqwest::Client;
 use tokio::sync::Mutex;
 
 const CACHE_TTL: Duration = Duration::from_secs(30);
