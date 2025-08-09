@@ -23,14 +23,10 @@ struct UpdateInfo {
 impl UpdateInfo {
 	#[must_use]
 	fn parse(data: &str) -> Self {
-		let mut launcher_url = None;
-		for line in data.lines() {
-			if let Some((key, value)) = line.split_once(": ") {
-				if key == "launcherUrl" {
-					launcher_url = Some(value.to_string());
-				}
-			}
-		}
+		let launcher_url = data.lines().find_map(|line| {
+			let (key, value) = line.split_once(": ")?;
+			(key == "launcherUrl").then(|| value.to_owned())
+		});
 		Self { launcher_url }
 	}
 }
