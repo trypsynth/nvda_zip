@@ -7,5 +7,5 @@ repository = "https://github.com/trypsynth/nvda_zip"
 edition = "2024"
 
 [dependencies]
-reqwest = { version = "0.12.22", default-features = false, features = ["http2", "rustls-tls-webpki-roots"] }
+reqwest = { version = "0.12.23", default-features = false, features = ["http2", "rustls-tls-webpki-roots"] }
 tokio = { version = "1.47.1", default-features = false, features = ["rt", "sync"] }
