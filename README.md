@@ -1,5 +1,5 @@
 # nvda_zip
-This is a simple Actix-web application that runs at `https://nvda.zip`, providing an API to download the latest version of the NVDA screen reader.
+This is a simple Actix-web application that runs at [nvda.zip](https://nvda.zip), providing an API to download the latest version of the NVDA screen reader.
 
 ## Endpoints:
 * `/`: Download the latest stable NVDA version.
