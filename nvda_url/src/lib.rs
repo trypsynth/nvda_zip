@@ -74,11 +74,10 @@ impl NvdaUrl {
 	/// An `Option<String>` containing the URL if successful, or `None` if an error occurs.
 	pub async fn get_url(&self, version_type: VersionType) -> Option<String> {
 		let mut cache = self.cache.lock().await;
-		if let Some((url, timestamp)) = cache.get(&version_type) {
-			if timestamp.elapsed() < CACHE_TTL {
+		if let Some((url, timestamp)) = cache.get(&version_type)
+			&& timestamp.elapsed() < CACHE_TTL {
 				return Some(url.clone());
 			}
-		}
 		let url = self.fetch_url(&version_type).await?;
 		cache.insert(version_type, (url.clone(), Instant::now()));
 		drop(cache);
