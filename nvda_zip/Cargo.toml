@@ -7,7 +7,7 @@ edition = "2024"
 
 [dependencies]
 actix-web = "4.11.0"
-askama = "0.14.0"
+askama = "0.15.1"
 env_logger = "0.11.8"
 nvda_url = { path = "../nvda_url" }
 serde = { version = "1.0.228", features = ["derive"] }
