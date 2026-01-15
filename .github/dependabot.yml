@@ -3,10 +3,8 @@ updates:
   - package-ecosystem: "cargo"
     directory: "/nvda_url"
     schedule:
-      interval: "weekly"
-
+      interval: "daily"
   - package-ecosystem: "cargo"
     directory: "/nvda_zip"
     schedule:
-      interval: "weekly"
-        
+      interval: "daily"
