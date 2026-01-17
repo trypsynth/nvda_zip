@@ -12,8 +12,11 @@ const CACHE_TTL: Duration = Duration::from_secs(30);
 
 /// Direct download link for NVDA 2017.3 (Windows XP).
 pub const XP_URL: &str = "https://download.nvaccess.org/releases/2017.3/nvda_2017.3.exe";
+/// SHA1 hash for NVDA 2017.3 (Windows XP).
+pub const XP_HASH: &str = "386e7acb8cc3ecaabc8005894cf783b51a8ac7f6";
 /// Direct download link for NVDA 2023.3.4 (Windows 7).
 pub const WIN7_URL: &str = "https://download.nvaccess.org/releases/2023.3.4/nvda_2023.3.4.exe";
+pub const WIN7_HASH: &str = "985a6deab01edb55fbedc9b056956e30120db290";
 
 /// NV Access has their own custom format for NVDA's update API, this lets us parse only the fields we care about out of it.
 #[derive(Debug)]
@@ -32,8 +35,8 @@ impl UpdateInfo {
 			match key {
 				"launcherUrl" => launcher_url = Some(value.to_owned()),
 				"launcherHash" => launcher_hash = Some(value.to_owned()),
-				_ => continue,
-			};
+				_ => {},
+			}
 		}
 		Self { launcher_url, launcher_hash }
 	}
