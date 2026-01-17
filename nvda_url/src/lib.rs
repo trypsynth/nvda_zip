@@ -19,16 +19,23 @@ pub const WIN7_URL: &str = "https://download.nvaccess.org/releases/2023.3.4/nvda
 #[derive(Debug)]
 struct UpdateInfo {
 	pub launcher_url: Option<String>,
+	pub launcher_hash: Option<String>,
 }
 
 impl UpdateInfo {
 	#[must_use]
 	fn parse(data: &str) -> Self {
-		let launcher_url = data.lines().find_map(|line| {
-			let (key, value) = line.split_once(": ")?;
-			(key == "launcherUrl").then(|| value.to_owned())
-		});
-		Self { launcher_url }
+		let mut launcher_url = None;
+		let mut launcher_hash =None;
+		for line in data.lines() {
+			let Some((key, value)) = line.split_once(": ") else { continue };
+			match key {
+				"launcherUrl" => launcher_url = Some(value.to_owned()),
+				"launcherHash" => launcher_hash = Some(value.to_owned()),
+				_ => continue,
+			};
+		}
+		Self { launcher_url, launcher_hash }
 	}
 }
 
@@ -57,7 +64,7 @@ impl VersionType {
 #[derive(Default)]
 pub struct NvdaUrl {
 	client: Client,
-	cache: Mutex<HashMap<VersionType, (String, Instant)>>,
+	cache: Mutex<HashMap<VersionType, (String, String, Instant)>>,
 }
 
 impl NvdaUrl {
@@ -73,21 +80,25 @@ impl NvdaUrl {
 	///
 	/// An `Option<String>` containing the URL if successful, or `None` if an error occurs.
 	pub async fn get_url(&self, version_type: VersionType) -> Option<String> {
+		Some(self.get_details(version_type).await?.0)
+	}
+	
+	pub async fn get_details(&self, version_type: VersionType) -> Option<(String, String)> {
 		let mut cache = self.cache.lock().await;
-		if let Some((url, timestamp)) = cache.get(&version_type)
+		if let Some((url, sha1_hash, timestamp)) = cache.get(&version_type)
 			&& timestamp.elapsed() < CACHE_TTL {
-				return Some(url.clone());
+				return Some((url.clone(), sha1_hash.clone()));
 			}
-		let url = self.fetch_url(&version_type).await?;
-		cache.insert(version_type, (url.clone(), Instant::now()));
+		let (url, sha1_hash) = self.fetch_url(&version_type).await?;
+		cache.insert(version_type, (url.clone(), sha1_hash.clone(), Instant::now()));
 		drop(cache);
-		Some(url)
+		Some((url, sha1_hash))
 	}
 
-	async fn fetch_url(&self, version_type: &VersionType) -> Option<String> {
+	async fn fetch_url(&self, version_type: &VersionType) -> Option<(String, String)> {
 		let url = format!("https://api.nvaccess.org/nvdaUpdateCheck?versionType={}", version_type.as_str());
 		let body = self.client.get(&url).send().await.ok()?.text().await.ok()?;
 		let info = UpdateInfo::parse(&body);
-		info.launcher_url
+		Some((info.launcher_url?, info.launcher_hash?))
 	}
 }
