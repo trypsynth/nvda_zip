@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use actix_web::{App, HttpResponse, HttpServer, Result as ActixResult, middleware, web};
 use askama::Template;
-use nvda_url::{NvdaUrl, VersionType, WIN7_URL, XP_URL};
+use nvda_url::{NvdaUrl, VersionType, WIN7_URL, XP_URL, WIN7_HASH, XP_HASH};
 use serde::Serialize;
 use tokio::sync::Mutex;
 
@@ -13,6 +13,7 @@ type SharedNvdaUrl = web::Data<Arc<Mutex<NvdaUrl>>>;
 #[derive(Serialize)]
 struct UrlResponse {
 	url: String,
+	hash: String,
 }
 
 #[derive(Template)]
@@ -23,8 +24,8 @@ fn redirect_to(url: &str) -> HttpResponse {
 	HttpResponse::Found().append_header(("Location", url)).finish()
 }
 
-fn json_url_response(url: String) -> HttpResponse {
-	HttpResponse::Ok().json(UrlResponse { url })
+fn json_url_response(url: String, hash: String) -> HttpResponse {
+	HttpResponse::Ok().json(UrlResponse { url, hash })
 }
 
 async fn version_handler(
@@ -33,16 +34,16 @@ async fn version_handler(
 	as_json: bool,
 ) -> ActixResult<HttpResponse> {
 	let nvda_url = nvda_url.lock().await;
-	(nvda_url.get_url(version_type).await).map_or_else(
+	(nvda_url.get_details(version_type).await).map_or_else(
 		|| {
 			if as_json {
-				Ok(HttpResponse::InternalServerError().json(UrlResponse { url: String::new() }))
+				Ok(HttpResponse::InternalServerError().json(UrlResponse { url: String::new(), hash: String::new() }))
 			} else {
 				Ok(HttpResponse::InternalServerError().body("Error fetching latest NVDA version"))
 			}
 		},
-		|url| {
-			if as_json { Ok(json_url_response(url)) } else { Ok(redirect_to(&url)) }
+		|(url, hash)| {
+			if as_json { Ok(json_url_response(url, hash)) } else { Ok(redirect_to(&url)) }
 		},
 	)
 }
@@ -76,7 +77,7 @@ async fn xp_redirect() -> ActixResult<HttpResponse> {
 }
 
 async fn xp_json() -> ActixResult<HttpResponse> {
-	Ok(json_url_response(XP_URL.to_string()))
+	Ok(json_url_response(XP_URL.to_string(), XP_HASH.to_string()))
 }
 
 async fn win7_redirect() -> ActixResult<HttpResponse> {
@@ -84,7 +85,7 @@ async fn win7_redirect() -> ActixResult<HttpResponse> {
 }
 
 async fn win7_json() -> ActixResult<HttpResponse> {
-	Ok(json_url_response(WIN7_URL.to_string()))
+	Ok(json_url_response(WIN7_URL.to_string(), WIN7_HASH.to_string()))
 }
 
 async fn not_found() -> ActixResult<HttpResponse> {
