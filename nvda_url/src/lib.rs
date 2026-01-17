@@ -29,13 +29,13 @@ impl UpdateInfo {
 	#[must_use]
 	fn parse(data: &str) -> Self {
 		let mut launcher_url = None;
-		let mut launcher_hash =None;
+		let mut launcher_hash = None;
 		for line in data.lines() {
 			let Some((key, value)) = line.split_once(": ") else { continue };
 			match key {
 				"launcherUrl" => launcher_url = Some(value.to_owned()),
 				"launcherHash" => launcher_hash = Some(value.to_owned()),
-				_ => {},
+				_ => {}
 			}
 		}
 		Self { launcher_url, launcher_hash }
@@ -85,13 +85,14 @@ impl NvdaUrl {
 	pub async fn get_url(&self, version_type: VersionType) -> Option<String> {
 		Some(self.get_details(version_type).await?.0)
 	}
-	
+
 	pub async fn get_details(&self, version_type: VersionType) -> Option<(String, String)> {
 		let mut cache = self.cache.lock().await;
 		if let Some((url, sha1_hash, timestamp)) = cache.get(&version_type)
-			&& timestamp.elapsed() < CACHE_TTL {
-				return Some((url.clone(), sha1_hash.clone()));
-			}
+			&& timestamp.elapsed() < CACHE_TTL
+		{
+			return Some((url.clone(), sha1_hash.clone()));
+		}
 		let (url, sha1_hash) = self.fetch_url(&version_type).await?;
 		cache.insert(version_type, (url.clone(), sha1_hash.clone(), Instant::now()));
 		drop(cache);

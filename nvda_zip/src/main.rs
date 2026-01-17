@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use actix_web::{App, HttpResponse, HttpServer, Result as ActixResult, middleware, web};
 use askama::Template;
-use nvda_url::{NvdaUrl, VersionType, WIN7_URL, XP_URL, WIN7_HASH, XP_HASH};
+use nvda_url::{NvdaUrl, VersionType, WIN7_HASH, WIN7_URL, XP_HASH, XP_URL};
 use serde::Serialize;
 use tokio::sync::Mutex;
 
