@@ -13,6 +13,7 @@ type SharedNvdaUrl = web::Data<Arc<Mutex<NvdaUrl>>>;
 #[derive(Serialize)]
 struct UrlResponse {
 	url: String,
+	/// SHA1 hash of the file pointed to by `url`.
 	hash: String,
 }
 
