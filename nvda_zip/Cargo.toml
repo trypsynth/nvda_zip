@@ -1,6 +1,6 @@
 [package]
 name = "nvda_zip"
-version = "0.3.0"
+version = "0.4.0"
 repository = "https://github.com/trypsynth/nvda_zip"
 license = "MIT"
 edition = "2024"
